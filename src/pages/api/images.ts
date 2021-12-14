@@ -25,7 +25,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<void> {
-  
   if (req.method === 'POST') {
     const { url, title, description } = req.body;
 
@@ -48,8 +47,10 @@ export default async function handler(
           .json({ error: `Sorry something Happened! ${err.message}` })
       );
   }
+
   if (req.method === 'GET') {
     const { after } = req.query;
+
     const queryOptions = {
       size: 6,
       ...(after && { after: query.Ref(query.Collection('images'), after) }),

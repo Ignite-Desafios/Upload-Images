@@ -25,7 +25,6 @@ export function Card({ data, viewImage }: CardProps): JSX.Element {
 
   return (
     <Box key={data.ts} borderRadius="md" bgColor="pGray.800">
-      
       <Skeleton isLoaded={!isLoading}>
         <Image
           src={data.url}
@@ -41,8 +40,7 @@ export function Card({ data, viewImage }: CardProps): JSX.Element {
       </Skeleton>
 
       <Box pt={5} pb={4} px={6}>
-      
-         {isLoading ? (
+        {isLoading ? (
           <>
             <SkeletonText fontSize="2xl" mt={2} noOfLines={1} />
             <SkeletonText fontSize="md" mt={7} noOfLines={1} />

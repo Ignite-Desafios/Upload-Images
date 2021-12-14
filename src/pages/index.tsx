@@ -1,4 +1,4 @@
-import { Button, Box, Heading } from '@chakra-ui/react';
+import { Button, Box } from '@chakra-ui/react';
 import { useMemo } from 'react';
 import { useInfiniteQuery } from 'react-query';
 
@@ -8,7 +8,29 @@ import { api } from '../services/api';
 import { Loading } from '../components/Loading';
 import { Error } from '../components/Error';
 
+interface Image {
+  title: string;
+  description: string;
+  url: string;
+  ts: number;
+  id: string;
+}
+
+interface GetImagesResponse {
+  after: string;
+  data: Image[];
+}
+
 export default function Home(): JSX.Element {
+  async function fetchImages({ pageParam = null }): Promise<GetImagesResponse> {
+    const { data } = await api('/api/images', {
+      params: {
+        after: pageParam,
+      },
+    });
+    return data;
+  }
+
   const {
     data,
     isLoading,
@@ -16,71 +38,35 @@ export default function Home(): JSX.Element {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteQuery(
-    'images',
-    // TODO AXIOS REQUEST WITH PARAM
-    async ({ pageParam }) => {
-      const response = await api.get('/api/images', {
-        params: {
-          after: pageParam,
-        },
-      });
-
-      return response.data;
-    },
-    {
-      getNextPageParam: (lastPage, pages) => {
-        console.log(lastPage, pages);
-        return lastPage.after;
-      },
-    }
-  );
+  } = useInfiniteQuery('images', fetchImages, {
+    getNextPageParam: lastPage => lastPage?.after || null,
+  });
 
   const formattedData = useMemo(() => {
-    // TODO FORMAT AND FLAT DATA ARRAY
-    if (!data) {
-      return [];
-    }
-
-    return data.pages.reduce((prevArr, currPage) => {
-      prevArr = [...prevArr, ...currPage.data];
-
-      return prevArr;
-    }, []);
+    const formatted = data?.pages.flatMap(imageData => {
+      return imageData.data.flat();
+    });
+    return formatted;
   }, [data]);
 
-  if (isLoading) {
+  if (isLoading && !isError) {
     return <Loading />;
   }
 
-  if (isError) {
+  if (!isLoading && isError) {
     return <Error />;
   }
 
   return (
     <>
       <Header />
-      <div style={{display: "none"}}>
-      <img alt="Doge" src="https://i.ibb.co/K6DZdXc/minh-pham-LTQMgx8t-Yq-M-unsplash.jpg" className="chakra-image css-1xe2yo5"/>
-      <h1>Doge</h1>
-      <header>
-        <h2 aria-role="reading" aria-level={2} >Doge</h2>
-        <Heading>Doge</Heading>
-      </header>
-      {/* <heading>Doge</heading> */}
-      <h4>Doge</h4>
-      <p className="chakra-text css-dvmqi6">The best doge</p>
-      </div>
-      <Box maxW={1120} px={20} mx="auto" my={20}>
+
+      <Box maxW={1120} px={[10, 15, 20]} mx="auto" my={[10, 15, 20]}>
         <CardList cards={formattedData} />
+
         {hasNextPage && (
-          <Button
-            role="button"
-            type="button"
-            mt="6"
-            onClick={() => fetchNextPage()}
-          >
-            {isFetchingNextPage || isLoading ? 'Carregando...' : 'Carregar mais'}
+          <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+            {isFetchingNextPage ? 'Carregando...' : 'Carregar mais'}
           </Button>
         )}
       </Box>
