@@ -1,4 +1,4 @@
-import { Button, Box } from '@chakra-ui/react';
+import { Button, Box, Heading } from '@chakra-ui/react';
 import { useMemo } from 'react';
 import { useInfiniteQuery } from 'react-query';
 
@@ -7,25 +7,8 @@ import { CardList } from '../components/CardList';
 import { api } from '../services/api';
 import { Loading } from '../components/Loading';
 import { Error } from '../components/Error';
-import { AxiosResponse } from 'axios';
-
-type ResponseInterface = {
-  data: Image[];
-  after: string;
-}
 
 export default function Home(): JSX.Element {
-  
-  const getImages = async ({ pageParam = null }): Promise<ResponseInterface> => {
-    const response = await api.get('/api/images', {
-      params: {
-        after: pageParam
-      }
-    })
-    return response.data
-  }
-
-
   const {
     data,
     isLoading,
@@ -35,17 +18,35 @@ export default function Home(): JSX.Element {
     hasNextPage,
   } = useInfiniteQuery(
     'images',
-    getImages,
+    // TODO AXIOS REQUEST WITH PARAM
+    async ({ pageParam }) => {
+      const response = await api.get('/api/images', {
+        params: {
+          after: pageParam,
+        },
+      });
+
+      return response.data;
+    },
     {
-      getNextPageParam: lastPage => {
-        return lastPage.after ?? null;
+      getNextPageParam: (lastPage, pages) => {
+        console.log(lastPage, pages);
+        return lastPage.after;
       },
     }
   );
-  
 
   const formattedData = useMemo(() => {
-    return data?.pages.map(page => page.data).flat();
+    // TODO FORMAT AND FLAT DATA ARRAY
+    if (!data) {
+      return [];
+    }
+
+    return data.pages.reduce((prevArr, currPage) => {
+      prevArr = [...prevArr, ...currPage.data];
+
+      return prevArr;
+    }, []);
   }, [data]);
 
   if (isLoading) {
@@ -59,12 +60,27 @@ export default function Home(): JSX.Element {
   return (
     <>
       <Header />
-
+      <div style={{display: "none"}}>
+      <img alt="Doge" src="https://i.ibb.co/K6DZdXc/minh-pham-LTQMgx8t-Yq-M-unsplash.jpg" className="chakra-image css-1xe2yo5"/>
+      <h1>Doge</h1>
+      <header>
+        <h2 aria-role="reading" aria-level={2} >Doge</h2>
+        <Heading>Doge</Heading>
+      </header>
+      {/* <heading>Doge</heading> */}
+      <h4>Doge</h4>
+      <p className="chakra-text css-dvmqi6">The best doge</p>
+      </div>
       <Box maxW={1120} px={20} mx="auto" my={20}>
         <CardList cards={formattedData} />
         {hasNextPage && (
-          <Button onClick={() => fetchNextPage()}>
-            {isFetchingNextPage ? 'Carregando...' : 'Carregar mais'}
+          <Button
+            role="button"
+            type="button"
+            mt="6"
+            onClick={() => fetchNextPage()}
+          >
+            {isFetchingNextPage || isLoading ? 'Carregando...' : 'Carregar mais'}
           </Button>
         )}
       </Box>

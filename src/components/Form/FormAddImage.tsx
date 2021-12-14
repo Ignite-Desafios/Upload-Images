@@ -105,6 +105,8 @@ export function FormAddImage({ closeModal }: FormAddImageProps): JSX.Element {
         duration: 5000,
       });
     } finally {
+      mutation.reset();
+      setImageUrl("")
       reset();
       closeModal();
     }
